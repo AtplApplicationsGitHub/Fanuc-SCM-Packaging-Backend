@@ -12,37 +12,31 @@ const CIRCLE_SIZE = 48;
 const YELLOW = '#FED100';
 const BLACK = '#000000';
 
-// === HELPER FUNCTION: EXTRACTED COMPLEXITY ===
-// This separates logic from rendering, drastically reducing Cognitive Complexity.
-const getButtonStyles = (isDark, active, isLogout) => {
-  // 1. Determine Background Color
-  let backgroundColor = 'transparent';
-  if (active) {
-    backgroundColor = isDark ? `${BLACK} !important` : `${YELLOW} !important`;
-  }
+// === 1. SMALLER HELPER FUNCTIONS (Low Complexity) ===
 
-  // 2. Determine Text/Icon Color
-  let color;
-  if (isLogout) {
-    color = isDark ? '#ff5252' : '#d32f2f';
-  } else if (active) {
-    color = isDark ? YELLOW : BLACK;
-  } else {
-    color = isDark ? BLACK : '#ffffff';
-  }
-
-  // 3. Determine Hover Background
-  let hoverBg;
-  if (isLogout) {
-    hoverBg = '#d32f2f !important';
-  } else if (active) {
-    hoverBg = isDark ? '#1a1a1a !important' : '#eab308 !important';
-  } else {
-    hoverBg = isDark ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.2)';
-  }
-
-  return { backgroundColor, color, hoverBg };
+const getBackgroundColor = (isDark, active) => {
+    if (!active) return 'transparent';
+    return isDark ? `${BLACK} !important` : `${YELLOW} !important`;
 };
+
+const getTextColor = (isDark, active, isLogout) => {
+    if (isLogout) return isDark ? '#ff5252' : '#d32f2f';
+    if (active) return isDark ? YELLOW : BLACK;
+    return isDark ? BLACK : '#ffffff';
+};
+
+const getHoverBg = (isDark, active, isLogout) => {
+    if (isLogout) return '#d32f2f !important';
+    if (active) return isDark ? '#1a1a1a !important' : '#eab308 !important';
+    return isDark ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.2)';
+};
+
+// === 2. MAIN STYLE AGGREGATOR (Complexity: 0) ===
+const getButtonStyles = (isDark, active, isLogout) => ({
+    backgroundColor: getBackgroundColor(isDark, active),
+    color: getTextColor(isDark, active, isLogout),
+    hoverBg: getHoverBg(isDark, active, isLogout)
+});
 
 const Sidebar = ({ open }) => {
   const navigate = useNavigate();
@@ -64,7 +58,7 @@ const Sidebar = ({ open }) => {
   };
 
   const renderSidebarButton = (label, icon, onClick, active = false, isLogout = false) => {
-    // Call the helper to get clean styles
+    // Call the aggregator
     const styles = getButtonStyles(isDark, active, isLogout);
 
     return (
@@ -104,7 +98,6 @@ const Sidebar = ({ open }) => {
                       alignItems: 'center',
                       transition: 'all 0.2s ease',
 
-                      // === REFACTORED STYLES ===
                       backgroundColor: styles.backgroundColor,
                       color: styles.color,
 
