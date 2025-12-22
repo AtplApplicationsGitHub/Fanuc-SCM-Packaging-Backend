@@ -10,24 +10,19 @@ import Navbar from '../../../components/Navbar';
 import { loginUser } from '../services/authService';
 import { getHomeRoute } from '../../../utils/roleRedirect';
 
-const LoginPage = () => {
-  const [errorMsg, setErrorMsg] = useState(null);
-  const theme = useTheme();
-  const isDark = theme.palette.mode === 'dark';
-  const navigate = useNavigate();
-  const elementRadius = '16px';
+const ELEMENT_RADIUS = '16px';
 
-  // === UI STYLES PRESERVED ===
-  const roundedInputStyle = {
+// === HELPER: EXTRACTED STYLES (Reduces Cognitive Complexity) ===
+const getInputStyles = (isDark) => ({
     '& .MuiOutlinedInput-root': {
       backgroundColor: isDark ? '#0A0A0A' : '#ffffff',
-      borderRadius: elementRadius, 
+      borderRadius: ELEMENT_RADIUS, 
       transition: 'all 0.2s ease',
       '& fieldset': { borderColor: isDark ? '#333' : '#000000', borderWidth: '1px' },
       '&:hover fieldset': { borderColor: isDark ? '#666' : '#000000', borderWidth: '2px' },
       '&.Mui-focused fieldset': { borderColor: '#FED100 !important', borderWidth: '2px' },
       
-      // === FIX: AUTOFILL OVERRIDE ===
+      // === AUTOFILL OVERRIDE ===
       '& input': { 
         color: isDark ? '#fff' : '#000', 
         padding: '16px 20px', 
@@ -36,16 +31,10 @@ const LoginPage = () => {
 
         // TARGETS CHROME/EDGE AUTOFILL
         '&:-webkit-autofill': {
-            // 1. Paint over the blue background with your theme color
+            // Paint over the blue background
             WebkitBoxShadow: `0 0 0 1000px ${isDark ? '#0A0A0A' : '#ffffff'} inset`,
-            
-            // 2. Force the text color to stay white (or black)
             WebkitTextFillColor: isDark ? '#fff' : '#000',
-            
-            // 3. Ensure the caret (cursor) is visible
             caretColor: isDark ? '#fff' : '#000',
-            
-            // 4. Keep the corners rounded
             borderRadius: 'inherit'
         }
       }
@@ -54,7 +43,16 @@ const LoginPage = () => {
       color: isDark ? '#888' : '#000000', fontWeight: 600, 
       '&.Mui-focused': { color: isDark ? '#FED100' : '#000000', fontWeight: 800 }
     }
-  };
+});
+
+const LoginPage = () => {
+  const [errorMsg, setErrorMsg] = useState(null);
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const navigate = useNavigate();
+
+  // Call the helper function instead of defining the object inline
+  const roundedInputStyle = getInputStyles(isDark);
 
   const formik = useFormik({
     initialValues: { email: '', password: '' },
@@ -72,7 +70,6 @@ const LoginPage = () => {
             sessionStorage.setItem('refresh_token', data.tokens.refresh);
             sessionStorage.setItem('user_role', data.user.role_name); 
             
-            // === DYNAMIC REDIRECT ===
             const targetPath = getHomeRoute(data.user.role_name);
             navigate(targetPath, { replace: true });
             
@@ -103,13 +100,13 @@ const LoginPage = () => {
                 </Box>
             </Box>
             <Box sx={{ p: 4, pt: 6 }}>
-                {errorMsg && <Alert severity="error" sx={{ width: '100%', mb: 3, borderRadius: elementRadius }}>{errorMsg}</Alert>}
+                {errorMsg && <Alert severity="error" sx={{ width: '100%', mb: 3, borderRadius: ELEMENT_RADIUS }}>{errorMsg}</Alert>}
                 <Box component="form" onSubmit={formik.handleSubmit}>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3.5 }}> 
                     <TextField fullWidth id="email" name="email" label="Email or Username" variant="outlined" sx={roundedInputStyle} value={formik.values.email} onChange={formik.handleChange} />
                     <TextField fullWidth id="password" name="password" label="Password" type="password" variant="outlined" sx={roundedInputStyle} value={formik.values.password} onChange={formik.handleChange} />
                 </Box>
-                <Button type="submit" fullWidth variant="contained" disableElevation disabled={formik.isSubmitting} sx={{ mt: 6, height: '56px', borderRadius: elementRadius, fontWeight: 800, fontSize: '1.1rem', textTransform: 'uppercase', letterSpacing: '1px', backgroundColor: isDark ? '#FED100' : '#000', color: isDark ? '#000' : '#FED100', border: 'none', '&:hover': { backgroundColor: isDark ? '#EAB308' : '#333', boxShadow: '0 4px 12px rgba(0,0,0,0.2)' } }}>
+                <Button type="submit" fullWidth variant="contained" disableElevation disabled={formik.isSubmitting} sx={{ mt: 6, height: '56px', borderRadius: ELEMENT_RADIUS, fontWeight: 800, fontSize: '1.1rem', textTransform: 'uppercase', letterSpacing: '1px', backgroundColor: isDark ? '#FED100' : '#000', color: isDark ? '#000' : '#FED100', border: 'none', '&:hover': { backgroundColor: isDark ? '#EAB308' : '#333', boxShadow: '0 4px 12px rgba(0,0,0,0.2)' } }}>
                     {formik.isSubmitting ? 'Authenticating...' : 'Access System'}
                 </Button>
                 </Box>
