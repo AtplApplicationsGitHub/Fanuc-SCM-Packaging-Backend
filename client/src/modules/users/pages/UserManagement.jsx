@@ -19,13 +19,42 @@ import CreateUserModal from '../components/CreateUserModal';
 import EditUserModal from '../components/EditUserModal';
 import ConfirmDeleteModal from '../components/ConfirmDeleteModal';
 
-// === 1. EXTRACTED SUB-COMPONENT (Reduces Complexity) ===
-// This component handles all the visual logic for a single row
+// === HELPER FUNCTIONS (Extracted to reduce complexity) ===
+
+const getChipStyles = (role, isDark) => {
+    if (role === 'SCM Admin') {
+        return { bg: 'primary.main', color: '#000' };
+    }
+    return { 
+        bg: isDark ? '#333' : '#e0e0e0', 
+        color: 'text.primary' 
+    };
+};
+
+const getStatusBoxSx = (isProtected, isDark) => ({
+    display: 'flex', alignItems: 'center', gap: 1,
+    width: 'fit-content',
+    p: 0.5, borderRadius: 1,
+    cursor: isProtected ? 'not-allowed' : 'pointer',
+    opacity: isProtected ? 0.6 : 1,
+    '&:hover': {
+        bgcolor: isProtected 
+            ? 'transparent' 
+            : (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)')
+    }
+});
+
+const getStatusColor = (isActive) => isActive ? '#00c853' : 'text.disabled';
+const getStatusLabel = (isActive) => isActive ? 'ACTIVE' : 'INACTIVE';
+
+// === 1. EXTRACTED SUB-COMPONENT ===
 const UserTableRow = ({ row, index, isDark, onStatusClick, onEdit, onDelete }) => {
-    // Helper for Chip colors
-    const isScmAdmin = row.role === 'SCM Admin';
-    const chipBg = isScmAdmin ? 'primary.main' : (isDark ? '#333' : '#e0e0e0');
-    const chipColor = isScmAdmin ? '#000' : 'text.primary';
+    // 1. Calculate Styles using Helpers (0 Complexity)
+    const chipStyles = getChipStyles(row.role, isDark);
+    const statusBoxSx = getStatusBoxSx(row.is_protected, isDark);
+    const statusColor = getStatusColor(row.active);
+    const statusLabel = getStatusLabel(row.active);
+    const actionOpacity = row.is_protected ? 0.3 : 1;
 
     return (
         <TableRow sx={{ '&:last-child td': { border: 0 }, bgcolor: index % 2 === 0 ? 'background.paper' : 'background.default' }}>
@@ -35,7 +64,7 @@ const UserTableRow = ({ row, index, isDark, onStatusClick, onEdit, onDelete }) =
                 <Chip 
                     label={row.role} 
                     size="small" 
-                    sx={{ borderRadius: '4px', fontWeight: 700, bgcolor: chipBg, color: chipColor }} 
+                    sx={{ borderRadius: '4px', fontWeight: 700, bgcolor: chipStyles.bg, color: chipStyles.color }} 
                 />
             </TableCell>
             
@@ -44,23 +73,16 @@ const UserTableRow = ({ row, index, isDark, onStatusClick, onEdit, onDelete }) =
                 <Tooltip title={row.is_protected ? "Root User Locked" : "Click to Toggle Status"}>
                     <Box 
                         onClick={() => !row.is_protected && onStatusClick(row)}
-                        sx={{ 
-                            display: 'flex', alignItems: 'center', gap: 1, 
-                            cursor: row.is_protected ? 'not-allowed' : 'pointer', 
-                            width: 'fit-content',
-                            p: 0.5, borderRadius: 1,
-                            opacity: row.is_protected ? 0.6 : 1, 
-                            '&:hover': { bgcolor: row.is_protected ? 'transparent' : (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)') } 
-                        }}
+                        sx={statusBoxSx}
                     >
                         {row.is_protected ? (
                             <LockIcon sx={{ fontSize: 16, color: 'text.disabled', mr: 0.5 }} />
                         ) : (
-                            <Box sx={{ width: '8px', height: '8px', borderRadius: '50%', bgcolor: row.active ? '#00c853' : 'text.disabled' }} />
+                            <Box sx={{ width: '8px', height: '8px', borderRadius: '50%', bgcolor: statusColor }} />
                         )}
                         
-                        <Typography variant="caption" sx={{ fontWeight: 700, color: row.active ? '#00c853' : 'text.disabled' }}>
-                            {row.active ? 'ACTIVE' : 'INACTIVE'}
+                        <Typography variant="caption" sx={{ fontWeight: 700, color: statusColor }}>
+                            {statusLabel}
                         </Typography>
                     </Box>
                 </Tooltip>
@@ -73,14 +95,14 @@ const UserTableRow = ({ row, index, isDark, onStatusClick, onEdit, onDelete }) =
                         size="small" 
                         onClick={() => onEdit(row)}
                         disabled={row.is_protected} 
-                        sx={{ opacity: row.is_protected ? 0.3 : 1 }}
+                        sx={{ opacity: actionOpacity }}
                     >
                         <EditIcon fontSize="small" />
                     </IconButton>
                     
                     <IconButton 
                         size="small" 
-                        sx={{ color: '#C32C30', opacity: row.is_protected ? 0.3 : 1 }} 
+                        sx={{ color: '#C32C30', opacity: actionOpacity }} 
                         onClick={() => onDelete(row)}
                         disabled={row.is_protected} 
                     >
@@ -170,10 +192,12 @@ const UserManagement = () => {
         setNotification({ open: true, message: 'Root Administrators cannot be deactivated.', type: 'warning' });
         return;
     }
+
     try {
         setUsers(prev => prev.map(u => 
             u.id === user.id ? { ...u, active: !u.active } : u
         ));
+
         await toggleUserStatus(user.id, user.active);
         setNotification({ open: true, message: `User ${user.active ? 'deactivated' : 'activated'}`, type: 'info' });
     } catch (error) {
@@ -207,7 +231,6 @@ const UserManagement = () => {
   };
   const visibleRows = users.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
-  // === HELPER TO RENDER TABLE CONTENT ===
   const renderTableBody = () => {
     if (loading) {
         return <TableRow><TableCell colSpan={5} align="center" sx={{ py: 4 }}><CircularProgress sx={{ color: '#FED100' }} /></TableCell></TableRow>;
