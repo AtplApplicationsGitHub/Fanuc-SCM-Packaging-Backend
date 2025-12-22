@@ -1,5 +1,6 @@
 /* client/src/modules/users/pages/UserManagement.jsx */
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types'; // <--- NEW: For Props Validation
 import { 
   Box, Paper, Typography, Button, Table, TableBody, TableCell, 
   TableContainer, TableHead, TableRow, Chip, IconButton, 
@@ -9,7 +10,6 @@ import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import LockIcon from '@mui/icons-material/Lock'; 
-import { useNavigate } from 'react-router-dom';
 
 // === SERVICES ===
 import { getAllUsers, createUser, updateUser, toggleUserStatus, deleteUser } from '../services/userService';
@@ -19,7 +19,7 @@ import CreateUserModal from '../components/CreateUserModal';
 import EditUserModal from '../components/EditUserModal';
 import ConfirmDeleteModal from '../components/ConfirmDeleteModal';
 
-// === HELPER FUNCTIONS (Extracted to reduce complexity) ===
+// === HELPER FUNCTIONS ===
 
 const getChipStyles = (role, isDark) => {
     if (role === 'SCM Admin') {
@@ -31,6 +31,12 @@ const getChipStyles = (role, isDark) => {
     };
 };
 
+// Fixed: Extracted Nested Ternary for Hover Background
+const getStatusHoverBg = (isProtected, isDark) => {
+    if (isProtected) return 'transparent';
+    return isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+};
+
 const getStatusBoxSx = (isProtected, isDark) => ({
     display: 'flex', alignItems: 'center', gap: 1,
     width: 'fit-content',
@@ -38,18 +44,15 @@ const getStatusBoxSx = (isProtected, isDark) => ({
     cursor: isProtected ? 'not-allowed' : 'pointer',
     opacity: isProtected ? 0.6 : 1,
     '&:hover': {
-        bgcolor: isProtected 
-            ? 'transparent' 
-            : (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)')
+        bgcolor: getStatusHoverBg(isProtected, isDark)
     }
 });
 
-const getStatusColor = (isActive) => isActive ? '#00c853' : 'text.disabled';
-const getStatusLabel = (isActive) => isActive ? 'ACTIVE' : 'INACTIVE';
+const getStatusColor = (isActive) => (isActive ? '#00c853' : 'text.disabled');
+const getStatusLabel = (isActive) => (isActive ? 'ACTIVE' : 'INACTIVE');
 
 // === 1. EXTRACTED SUB-COMPONENT ===
 const UserTableRow = ({ row, index, isDark, onStatusClick, onEdit, onDelete }) => {
-    // 1. Calculate Styles using Helpers (0 Complexity)
     const chipStyles = getChipStyles(row.role, isDark);
     const statusBoxSx = getStatusBoxSx(row.is_protected, isDark);
     const statusColor = getStatusColor(row.active);
@@ -114,9 +117,26 @@ const UserTableRow = ({ row, index, isDark, onStatusClick, onEdit, onDelete }) =
     );
 };
 
+// === PROPS VALIDATION (Fixes SonarQube Props Error) ===
+UserTableRow.propTypes = {
+    row: PropTypes.shape({
+        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+        name: PropTypes.string.isRequired,
+        email: PropTypes.string.isRequired,
+        role: PropTypes.string,
+        active: PropTypes.bool,
+        is_protected: PropTypes.bool,
+    }).isRequired,
+    index: PropTypes.number.isRequired,
+    isDark: PropTypes.bool.isRequired,
+    onStatusClick: PropTypes.func.isRequired,
+    onEdit: PropTypes.func.isRequired,
+    onDelete: PropTypes.func.isRequired,
+};
+
 // === MAIN COMPONENT ===
 const UserManagement = () => {
-  const navigate = useNavigate();
+  // Removed unused 'navigate'
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   
@@ -226,7 +246,8 @@ const UserManagement = () => {
   // === PAGINATION ===
   const handleChangePage = (event, newPage) => setPage(newPage);
   const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
+    // Fixed: Prefer Number.parseInt over parseInt
+    setRowsPerPage(Number.parseInt(event.target.value, 10));
     setPage(0);
   };
   const visibleRows = users.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
@@ -272,6 +293,7 @@ const UserManagement = () => {
                     User Management
                 </Typography>
                 <Typography variant="body2" sx={{ color: '#FFFFFF !important', fontWeight: 500, display: { xs: 'none', md: 'block' }, fontFamily: 'monospace' }}>
+                    {/* Fixed comment syntax inside JSX if necessary, though text content is valid here */}
                     // Access Control & Roles
                 </Typography>
             </Box>
