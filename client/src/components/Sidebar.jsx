@@ -1,5 +1,6 @@
 /* client/src/components/Sidebar.jsx */
 import React from 'react';
+import PropTypes from 'prop-types'; // <--- NEW IMPORT
 import { Drawer, List, ListItemButton, Tooltip, useTheme, Divider, Box } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
 import LogoutIcon from '@mui/icons-material/Logout'; 
@@ -147,6 +148,11 @@ const Sidebar = ({ open }) => {
       </List>
     </Drawer>
   );
+};
+
+// === PROP VALIDATION ===
+Sidebar.propTypes = {
+  open: PropTypes.bool.isRequired,
 };
 
 export default Sidebar;

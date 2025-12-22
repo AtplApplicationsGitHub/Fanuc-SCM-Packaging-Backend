@@ -1,5 +1,4 @@
-import { createTheme } from '@mui/material/styles';
-
+/* client/src/theme/theme.js */
 // === 1. DEFINE YOUR BRAND COLORS ===
 const BRAND = {
   yellow: '#FED100',

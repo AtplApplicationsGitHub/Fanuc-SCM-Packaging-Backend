@@ -1,5 +1,6 @@
 /* client/src/components/Navbar.jsx */
 import React, { useContext } from 'react';
+import PropTypes from 'prop-types'; // <--- NEW IMPORT
 import { AppBar, Toolbar, Box, ToggleButton, ToggleButtonGroup, IconButton, useTheme } from '@mui/material';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
@@ -34,8 +35,6 @@ const Navbar = ({ handleDrawerToggle }) => {
         border: 'none !important',
         
         // === ELECTRIC GLIP ===
-        // We use a very light yellow border to create a "sharp edge" 
-        // and a heavy shadow for the "glow" area
         borderBottom: `6px solid ${isDark ? electricYellow : '#454545'} !important`,
         
         // The "Glow" logic: only active in dark mode
@@ -126,6 +125,11 @@ const Navbar = ({ handleDrawerToggle }) => {
       </Toolbar>
     </AppBar>
   );
+};
+
+// === PROP VALIDATION ===
+Navbar.propTypes = {
+  handleDrawerToggle: PropTypes.func.isRequired,
 };
 
 export default Navbar;

@@ -1,4 +1,6 @@
+/* client/src/context/ThemeContext.jsx */
 import React, { createContext, useState, useMemo } from 'react';
+import PropTypes from 'prop-types'; // <--- NEW IMPORT
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 // IMPORT OUR NEW RULES
 import { getDesignTokens } from '../theme/theme'; 
@@ -33,4 +35,9 @@ export const ThemeContextProvider = ({ children }) => {
       </ThemeProvider>
     </ColorModeContext.Provider>
   );
+};
+
+// === PROP VALIDATION ===
+ThemeContextProvider.propTypes = {
+  children: PropTypes.node.isRequired,
 };

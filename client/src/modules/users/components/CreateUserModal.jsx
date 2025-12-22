@@ -1,6 +1,6 @@
 /* client/src/modules/users/components/CreateUserModal.jsx */
 import React, { useEffect } from 'react';
-import PropTypes from 'prop-types'; // <--- NEW IMPORT
+import PropTypes from 'prop-types';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import {
@@ -25,7 +25,7 @@ const UserSchema = Yup.object().shape({
   password: Yup.string()
     .min(8, 'Must be at least 8 chars')
     .matches(/[A-Z]/, 'Must contain 1 Uppercase')
-    .matches(/[0-9]/, 'Must contain 1 Number')
+    .matches(/\d/, 'Must contain 1 Number') // <--- FIXED: Used \d instead of [0-9]
     .matches(/[!@#$%^&*]/, 'Must contain 1 Special Char')
     .required('Password is required'),
   confirmPassword: Yup.string()
