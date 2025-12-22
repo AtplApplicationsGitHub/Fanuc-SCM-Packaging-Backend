@@ -8,7 +8,7 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import LockIcon from '@mui/icons-material/Lock'; // <--- NEW IMPORT
+import LockIcon from '@mui/icons-material/Lock'; 
 import { useNavigate } from 'react-router-dom';
 
 // === SERVICES ===
@@ -19,6 +19,80 @@ import CreateUserModal from '../components/CreateUserModal';
 import EditUserModal from '../components/EditUserModal';
 import ConfirmDeleteModal from '../components/ConfirmDeleteModal';
 
+// === 1. EXTRACTED SUB-COMPONENT (Reduces Complexity) ===
+// This component handles all the visual logic for a single row
+const UserTableRow = ({ row, index, isDark, onStatusClick, onEdit, onDelete }) => {
+    // Helper for Chip colors
+    const isScmAdmin = row.role === 'SCM Admin';
+    const chipBg = isScmAdmin ? 'primary.main' : (isDark ? '#333' : '#e0e0e0');
+    const chipColor = isScmAdmin ? '#000' : 'text.primary';
+
+    return (
+        <TableRow sx={{ '&:last-child td': { border: 0 }, bgcolor: index % 2 === 0 ? 'background.paper' : 'background.default' }}>
+            <TableCell><Typography fontWeight="bold">{row.name}</Typography></TableCell>
+            <TableCell sx={{ color: 'text.secondary' }}>{row.email}</TableCell>
+            <TableCell>
+                <Chip 
+                    label={row.role} 
+                    size="small" 
+                    sx={{ borderRadius: '4px', fontWeight: 700, bgcolor: chipBg, color: chipColor }} 
+                />
+            </TableCell>
+            
+            {/* STATUS COLUMN */}
+            <TableCell>
+                <Tooltip title={row.is_protected ? "Root User Locked" : "Click to Toggle Status"}>
+                    <Box 
+                        onClick={() => !row.is_protected && onStatusClick(row)}
+                        sx={{ 
+                            display: 'flex', alignItems: 'center', gap: 1, 
+                            cursor: row.is_protected ? 'not-allowed' : 'pointer', 
+                            width: 'fit-content',
+                            p: 0.5, borderRadius: 1,
+                            opacity: row.is_protected ? 0.6 : 1, 
+                            '&:hover': { bgcolor: row.is_protected ? 'transparent' : (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)') } 
+                        }}
+                    >
+                        {row.is_protected ? (
+                            <LockIcon sx={{ fontSize: 16, color: 'text.disabled', mr: 0.5 }} />
+                        ) : (
+                            <Box sx={{ width: '8px', height: '8px', borderRadius: '50%', bgcolor: row.active ? '#00c853' : 'text.disabled' }} />
+                        )}
+                        
+                        <Typography variant="caption" sx={{ fontWeight: 700, color: row.active ? '#00c853' : 'text.disabled' }}>
+                            {row.active ? 'ACTIVE' : 'INACTIVE'}
+                        </Typography>
+                    </Box>
+                </Tooltip>
+            </TableCell>
+
+            {/* ACTIONS COLUMN */}
+            <TableCell>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                    <IconButton 
+                        size="small" 
+                        onClick={() => onEdit(row)}
+                        disabled={row.is_protected} 
+                        sx={{ opacity: row.is_protected ? 0.3 : 1 }}
+                    >
+                        <EditIcon fontSize="small" />
+                    </IconButton>
+                    
+                    <IconButton 
+                        size="small" 
+                        sx={{ color: '#C32C30', opacity: row.is_protected ? 0.3 : 1 }} 
+                        onClick={() => onDelete(row)}
+                        disabled={row.is_protected} 
+                    >
+                        <DeleteIcon fontSize="small" />
+                    </IconButton>
+                </Box>
+            </TableCell>
+        </TableRow>
+    );
+};
+
+// === MAIN COMPONENT ===
 const UserManagement = () => {
   const navigate = useNavigate();
   const theme = useTheme();
@@ -51,7 +125,6 @@ const UserManagement = () => {
           ...user,
           role: user.role_name || 'No Role',
           active: user.is_active,
-          // SECURITY MAPPING: Convert backend flag to UI property
           is_protected: user.is_superuser 
       }));
       setUsers(uiFriendlyData);
@@ -65,8 +138,6 @@ const UserManagement = () => {
   useEffect(() => { fetchUsers(); }, []);
 
   // === 2. ACTIONS ===
-
-  // CREATE
   const handleCreateUser = async (formData) => {
     try {
       await createUser(formData);
@@ -78,7 +149,6 @@ const UserManagement = () => {
     }
   };
 
-  // UPDATE (EDIT)
   const handleEditClick = (user) => {
     setSelectedUser(user);
     setEditModalOpen(true);
@@ -95,30 +165,23 @@ const UserManagement = () => {
     }
   };
 
-  // TOGGLE STATUS
   const handleStatusClick = async (user) => {
-    // SECURITY GUARD: Stop execution if user is protected
     if (user.is_protected) {
         setNotification({ open: true, message: 'Root Administrators cannot be deactivated.', type: 'warning' });
         return;
     }
-
     try {
-        // Optimistic Update (Instant Feedback)
         setUsers(prev => prev.map(u => 
             u.id === user.id ? { ...u, active: !u.active } : u
         ));
-
         await toggleUserStatus(user.id, user.active);
         setNotification({ open: true, message: `User ${user.active ? 'deactivated' : 'activated'}`, type: 'info' });
     } catch (error) {
-        // Revert on failure
         fetchUsers();
         setNotification({ open: true, message: 'Failed to update status', type: 'error' });
     }
   };
 
-  // DELETE
   const handleDeleteClick = (user) => {
     setSelectedUser(user);
     setDeleteModalOpen(true);
@@ -143,6 +206,27 @@ const UserManagement = () => {
     setPage(0);
   };
   const visibleRows = users.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
+  // === HELPER TO RENDER TABLE CONTENT ===
+  const renderTableBody = () => {
+    if (loading) {
+        return <TableRow><TableCell colSpan={5} align="center" sx={{ py: 4 }}><CircularProgress sx={{ color: '#FED100' }} /></TableCell></TableRow>;
+    }
+    if (visibleRows.length === 0) {
+        return <TableRow><TableCell colSpan={5} align="center" sx={{ py: 4 }}>No users found.</TableCell></TableRow>;
+    }
+    return visibleRows.map((row, index) => (
+        <UserTableRow 
+            key={row.id}
+            row={row}
+            index={index}
+            isDark={isDark}
+            onStatusClick={handleStatusClick}
+            onEdit={handleEditClick}
+            onDelete={handleDeleteClick}
+        />
+    ));
+  };
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -196,74 +280,8 @@ const UserManagement = () => {
                 ))}
               </TableRow>
             </TableHead>
-
             <TableBody>
-              {loading ? (
-                <TableRow><TableCell colSpan={5} align="center" sx={{ py: 4 }}><CircularProgress sx={{ color: '#FED100' }} /></TableCell></TableRow>
-              ) : visibleRows.length === 0 ? (
-                <TableRow><TableCell colSpan={5} align="center" sx={{ py: 4 }}>No users found.</TableCell></TableRow>
-              ) : (
-                visibleRows.map((row, index) => (
-                    <TableRow key={row.id} sx={{ '&:last-child td': { border: 0 }, bgcolor: index % 2 === 0 ? 'background.paper' : 'background.default' }}>
-                    <TableCell><Typography fontWeight="bold">{row.name}</Typography></TableCell>
-                    <TableCell sx={{ color: 'text.secondary' }}>{row.email}</TableCell>
-                    <TableCell>
-                        <Chip label={row.role} size="small" sx={{ borderRadius: '4px', fontWeight: 700, bgcolor: row.role === 'SCM Admin' ? 'primary.main' : (isDark ? '#333' : '#e0e0e0'), color: row.role === 'SCM Admin' ? '#000' : 'text.primary' }} />
-                    </TableCell>
-                    
-                    {/* === STATUS COLUMN (LOCKED IF SUPERUSER) === */}
-                    <TableCell>
-                        <Tooltip title={row.is_protected ? "Root User Locked" : "Click to Toggle Status"}>
-                            <Box 
-                                onClick={() => !row.is_protected && handleStatusClick(row)}
-                                sx={{ 
-                                    display: 'flex', alignItems: 'center', gap: 1, 
-                                    cursor: row.is_protected ? 'not-allowed' : 'pointer', 
-                                    width: 'fit-content',
-                                    p: 0.5, borderRadius: 1,
-                                    opacity: row.is_protected ? 0.6 : 1, // Dim if locked
-                                    '&:hover': { bgcolor: row.is_protected ? 'transparent' : (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)') } 
-                                }}
-                            >
-                                {/* Logic: Show Lock if protected, otherwise show Dot */}
-                                {row.is_protected ? (
-                                    <LockIcon sx={{ fontSize: 16, color: 'text.disabled', mr: 0.5 }} />
-                                ) : (
-                                    <Box sx={{ width: '8px', height: '8px', borderRadius: '50%', bgcolor: row.active ? '#00c853' : 'text.disabled' }} />
-                                )}
-                                
-                                <Typography variant="caption" sx={{ fontWeight: 700, color: row.active ? '#00c853' : 'text.disabled' }}>
-                                    {row.active ? 'ACTIVE' : 'INACTIVE'}
-                                </Typography>
-                            </Box>
-                        </Tooltip>
-                    </TableCell>
-
-                    {/* === ACTIONS COLUMN (DISABLED IF SUPERUSER) === */}
-                    <TableCell>
-                        <Box sx={{ display: 'flex', gap: 1 }}>
-                            <IconButton 
-                                size="small" 
-                                onClick={() => handleEditClick(row)}
-                                disabled={row.is_protected} // Disable Edit
-                                sx={{ opacity: row.is_protected ? 0.3 : 1 }}
-                            >
-                                <EditIcon fontSize="small" />
-                            </IconButton>
-                            
-                            <IconButton 
-                                size="small" 
-                                sx={{ color: '#C32C30', opacity: row.is_protected ? 0.3 : 1 }} 
-                                onClick={() => handleDeleteClick(row)}
-                                disabled={row.is_protected} // Disable Delete
-                            >
-                                <DeleteIcon fontSize="small" />
-                            </IconButton>
-                        </Box>
-                    </TableCell>
-                    </TableRow>
-                ))
-              )}
+              {renderTableBody()}
             </TableBody>
           </Table>
         </TableContainer>
@@ -286,14 +304,12 @@ const UserManagement = () => {
         onClose={() => setCreateModalOpen(false)} 
         onSubmit={handleCreateUser} 
       />
-      
       <EditUserModal 
         open={editModalOpen} 
         onClose={() => setEditModalOpen(false)} 
         onSubmit={handleUpdateUser}
         user={selectedUser}
       />
-      
       <ConfirmDeleteModal
         open={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
@@ -301,36 +317,16 @@ const UserManagement = () => {
         userName={selectedUser?.name}
       />
       
-      {/* === NOTIFICATIONS === */}
+      {/* NOTIFICATIONS */}
       <Snackbar 
-        open={notification.open} 
-        autoHideDuration={6000} 
-        onClose={() => setNotification({ ...notification, open: false })}
-        
-        // 1. ANCHOR: Top Center
+        open={notification.open} autoHideDuration={6000} onClose={() => setNotification({ ...notification, open: false })}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-        
-        // 2. STYLES: Force it down and on top
-        sx={{ 
-            zIndex: 9999,
-            // This targets the container div of the Snackbar
-            top: '120px !important', 
-            left: '50%',
-            transform: 'translateX(-50%)'
-        }}
+        sx={{ zIndex: 9999, top: '120px !important', left: '50%', transform: 'translateX(-50%)' }}
       >
         <Alert 
             onClose={() => setNotification({ ...notification, open: false })} 
-            severity={notification.type} 
-            variant="filled" // Makes it solid colored (Green/Red/Blue)
-            sx={{ 
-                width: '100%', 
-                minWidth: '350px',
-                fontWeight: 'bold', 
-                boxShadow: 6,
-                fontSize: '1rem',
-                alignItems: 'center'
-            }}
+            severity={notification.type} variant="filled"
+            sx={{ width: '100%', minWidth: '350px', fontWeight: 'bold', boxShadow: 6, fontSize: '1rem', alignItems: 'center' }}
         >
             {notification.message}
         </Alert>
