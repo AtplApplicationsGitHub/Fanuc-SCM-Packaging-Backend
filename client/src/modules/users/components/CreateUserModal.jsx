@@ -1,11 +1,12 @@
-/* client/src/components/CreateUserModal.jsx */
+/* client/src/modules/users/components/CreateUserModal.jsx */
 import React, { useEffect } from 'react';
+import PropTypes from 'prop-types'; // <--- NEW IMPORT
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, TextField, Box, Typography,
-  FormControlLabel, Switch, useTheme, Autocomplete // <--- Added Autocomplete
+  FormControlLabel, Switch, useTheme, Autocomplete
 } from '@mui/material';
 
 // ROLES
@@ -186,6 +187,13 @@ const CreateUserModal = ({ open, onClose, onSubmit }) => {
       </form>
     </Dialog>
   );
+};
+
+// === PROP VALIDATION ===
+CreateUserModal.propTypes = {
+    open: PropTypes.bool.isRequired,
+    onClose: PropTypes.func.isRequired,
+    onSubmit: PropTypes.func.isRequired,
 };
 
 export default CreateUserModal;

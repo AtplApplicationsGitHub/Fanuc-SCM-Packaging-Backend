@@ -1,11 +1,12 @@
-/* client/src/components/EditUserModal.jsx */
+/* client/src/modules/users/components/EditUserModal.jsx */
 import React, { useEffect } from 'react';
+import PropTypes from 'prop-types'; // <--- NEW IMPORT
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, TextField, Box, Typography,
-  FormControlLabel, Switch, useTheme, Autocomplete // <--- Added Autocomplete
+  FormControlLabel, Switch, useTheme, Autocomplete
 } from '@mui/material';
 
 const ROLES = ['Sales Engineer', 'Sales Manager', 'SCM Admin', 'Management'];
@@ -169,6 +170,20 @@ const EditUserModal = ({ open, onClose, onSubmit, user }) => {
       </form>
     </Dialog>
   );
+};
+
+// === PROP VALIDATION ===
+EditUserModal.propTypes = {
+    open: PropTypes.bool.isRequired,
+    onClose: PropTypes.func.isRequired,
+    onSubmit: PropTypes.func.isRequired,
+    user: PropTypes.shape({
+        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        name: PropTypes.string,
+        email: PropTypes.string,
+        role: PropTypes.string,
+        active: PropTypes.bool
+    }), // 'user' can be null initially, so not marked isRequired, or handled by defaultProps if needed
 };
 
 export default EditUserModal;

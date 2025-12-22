@@ -1,12 +1,14 @@
+/* client/src/modules/users/components/ConfirmDeleteModal.jsx */
 import React from 'react';
+import PropTypes from 'prop-types'; // <--- NEW IMPORT
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
-  Button, Typography, Box, useTheme
+  Button, Typography, Box
 } from '@mui/material';
 import WarningIcon from '@mui/icons-material/Warning';
 
 const ConfirmDeleteModal = ({ open, onClose, onConfirm, userName }) => {
-  const theme = useTheme();
+  // Removed unused 'theme' variable
   
   return (
     <Dialog 
@@ -51,6 +53,14 @@ const ConfirmDeleteModal = ({ open, onClose, onConfirm, userName }) => {
       </DialogActions>
     </Dialog>
   );
+};
+
+// === PROP VALIDATION ===
+ConfirmDeleteModal.propTypes = {
+    open: PropTypes.bool.isRequired,
+    onClose: PropTypes.func.isRequired,
+    onConfirm: PropTypes.func.isRequired,
+    userName: PropTypes.string, // Optional string (might be null initially)
 };
 
 export default ConfirmDeleteModal;
