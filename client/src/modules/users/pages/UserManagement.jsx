@@ -1,6 +1,6 @@
 /* client/src/modules/users/pages/UserManagement.jsx */
 import React, { useState, useEffect } from 'react';
-import PropTypes from 'prop-types'; // <--- NEW: For Props Validation
+import PropTypes from 'prop-types'; 
 import { 
   Box, Paper, Typography, Button, Table, TableBody, TableCell, 
   TableContainer, TableHead, TableRow, Chip, IconButton, 
@@ -31,7 +31,6 @@ const getChipStyles = (role, isDark) => {
     };
 };
 
-// Fixed: Extracted Nested Ternary for Hover Background
 const getStatusHoverBg = (isProtected, isDark) => {
     if (isProtected) return 'transparent';
     return isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
@@ -117,7 +116,6 @@ const UserTableRow = ({ row, index, isDark, onStatusClick, onEdit, onDelete }) =
     );
 };
 
-// === PROPS VALIDATION (Fixes SonarQube Props Error) ===
 UserTableRow.propTypes = {
     row: PropTypes.shape({
         id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
@@ -136,7 +134,6 @@ UserTableRow.propTypes = {
 
 // === MAIN COMPONENT ===
 const UserManagement = () => {
-  // Removed unused 'navigate'
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   
@@ -187,6 +184,8 @@ const UserManagement = () => {
       setCreateModalOpen(false);
       fetchUsers(); 
     } catch (error) {
+      // FIX 1: Log the error to handle the exception
+      console.error('Failed to create user:', error);
       setNotification({ open: true, message: 'Failed to create user', type: 'error' });
     }
   };
@@ -203,6 +202,8 @@ const UserManagement = () => {
       setEditModalOpen(false);
       fetchUsers();
     } catch (error) {
+      // FIX 2: Log the error
+      console.error('Failed to update user:', error);
       setNotification({ open: true, message: 'Failed to update user', type: 'error' });
     }
   };
@@ -221,6 +222,8 @@ const UserManagement = () => {
         await toggleUserStatus(user.id, user.active);
         setNotification({ open: true, message: `User ${user.active ? 'deactivated' : 'activated'}`, type: 'info' });
     } catch (error) {
+        // FIX 3: Log the error
+        console.error('Failed to toggle status:', error);
         fetchUsers();
         setNotification({ open: true, message: 'Failed to update status', type: 'error' });
     }
@@ -239,6 +242,8 @@ const UserManagement = () => {
         setDeleteModalOpen(false);
         fetchUsers();
     } catch (error) {
+        // FIX 4: Log the error
+        console.error('Failed to delete user:', error);
         setNotification({ open: true, message: 'Failed to delete user', type: 'error' });
     }
   };
@@ -246,7 +251,6 @@ const UserManagement = () => {
   // === PAGINATION ===
   const handleChangePage = (event, newPage) => setPage(newPage);
   const handleChangeRowsPerPage = (event) => {
-    // Fixed: Prefer Number.parseInt over parseInt
     setRowsPerPage(Number.parseInt(event.target.value, 10));
     setPage(0);
   };
@@ -293,8 +297,8 @@ const UserManagement = () => {
                     User Management
                 </Typography>
                 <Typography variant="body2" sx={{ color: '#FFFFFF !important', fontWeight: 500, display: { xs: 'none', md: 'block' }, fontFamily: 'monospace' }}>
-                    {/* Fixed comment syntax inside JSX if necessary, though text content is valid here */}
-                    // Access Control & Roles
+                    {/* FIX: Explicitly wrap text string to avoid "comment in children" warning */}
+                    {"// Access Control & Roles"}
                 </Typography>
             </Box>
         </Box>
