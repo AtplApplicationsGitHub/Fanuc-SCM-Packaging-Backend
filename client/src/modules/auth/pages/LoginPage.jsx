@@ -12,7 +12,7 @@ import { getHomeRoute } from '../../../utils/roleRedirect';
 
 const ELEMENT_RADIUS = '16px';
 
-// === HELPER: EXTRACTED STYLES (Reduces Cognitive Complexity) ===
+// === HELPER: EXTRACTED STYLES ===
 const getInputStyles = (isDark) => ({
     '& .MuiOutlinedInput-root': {
       backgroundColor: isDark ? '#0A0A0A' : '#ffffff',
@@ -65,7 +65,8 @@ const LoginPage = () => {
       try {
         const data = await loginUser(values);
         
-        if (data.tokens && data.tokens.access) {
+        // FIXED: Used optional chaining for concise null checking
+        if (data.tokens?.access) {
             sessionStorage.setItem('access_token', data.tokens.access);
             sessionStorage.setItem('refresh_token', data.tokens.refresh);
             sessionStorage.setItem('user_role', data.user.role_name); 

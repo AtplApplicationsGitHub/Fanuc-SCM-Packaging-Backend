@@ -2,15 +2,15 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { 
-    Box, Container, useTheme, Dialog, DialogTitle, 
+    Box, Container, Dialog, DialogTitle, 
     DialogContent, DialogActions, Button, Typography 
-} from '@mui/material';
+} from '@mui/material'; // Removed unused 'useTheme'
 import WarningIcon from '@mui/icons-material/Warning';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
 
 const MainLayout = () => {
-  const theme = useTheme();
+  // Removed unused 'theme' assignment
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -23,21 +23,22 @@ const MainLayout = () => {
   // === THE BACK BUTTON TRAP ===
   useEffect(() => {
     // 1. Push the current state to history stack on mount
-    window.history.pushState(null, null, window.location.pathname);
+    // Replaced 'window' with 'globalThis' for consistency/portability
+    globalThis.history.pushState(null, null, globalThis.location.pathname);
 
-    const handlePopState = (event) => {
+    const handlePopState = () => {
       // 2. Browser Back Button was clicked!
       // A. Push state again to "Undo" the URL change visually
-      window.history.pushState(null, null, window.location.pathname);
+      globalThis.history.pushState(null, null, globalThis.location.pathname);
       
       // B. Show our Custom Warning
       setShowExitWarning(true);
     };
 
-    window.addEventListener('popstate', handlePopState);
+    globalThis.addEventListener('popstate', handlePopState);
 
     return () => {
-      window.removeEventListener('popstate', handlePopState);
+      globalThis.removeEventListener('popstate', handlePopState);
     };
   }, [location]); // Re-arm trap on route change
 

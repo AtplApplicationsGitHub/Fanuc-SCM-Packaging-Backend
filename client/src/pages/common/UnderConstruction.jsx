@@ -1,4 +1,6 @@
+/* client/src/pages/common/UnderConstruction.jsx */
 import React from 'react';
+import PropTypes from 'prop-types'; // <--- NEW IMPORT
 import { Box, Typography, Paper } from '@mui/material';
 import ConstructionIcon from '@mui/icons-material/Construction';
 
@@ -33,6 +35,11 @@ const UnderConstruction = ({ title }) => {
       </Paper>
     </Box>
   );
+};
+
+// === PROP VALIDATION ===
+UnderConstruction.propTypes = {
+  title: PropTypes.string.isRequired,
 };
 
 export default UnderConstruction;
