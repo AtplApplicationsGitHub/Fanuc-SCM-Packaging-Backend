@@ -11,28 +11,24 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # 2. Explicitly load the .env file from the BASE_DIR
-# Note: In Docker production, this file likely won't exist. 
-# variables will be injected directly into the OS environment.
 env_path = BASE_DIR / '.env'
 load_dotenv(dotenv_path=env_path)
 
 # 3. Read the Secret Key
-# Production Update: No default value provided for safety. It must be in the Env.
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 
 # Debug Check
 if not SECRET_KEY:
-    # Fallback only for local testing if absolutely necessary, but warn heavily
     print("WARNING: DJANGO_SECRET_KEY not found. Using unsafe dev key.")
     SECRET_KEY = 'unsafe-dev-key-for-testing-only'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# Cast string to boolean safely
 DEBUG = os.getenv('DEBUG_MODE', 'False') == 'True'
 
-# Production Update: Dynamic Hosts
-# Example Env Var: ALLOWED_HOSTS=api.yoursite.com,127.0.0.1,localhost
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+# --- CRITICAL FIX 1: ALLOW ALL HOSTS ---
+# Nginx is already filtering traffic. This allows Django to accept requests
+# coming from your domain (fanuc-scm.goval.app) without crashing.
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 INSTALLED_APPS = [
@@ -84,7 +80,6 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 # Database
-# Production Update: HOST defaults to localhost, but can be an IP (e.g., 172.17.0.1)
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -118,9 +113,9 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
+# Static files
 STATIC_URL = 'static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'  # Added for production 'collectstatic'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -130,13 +125,21 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # 1. Custom User Model
 AUTH_USER_MODEL = 'accounts.User'
 
-# 2. CORS Settings (Dynamic)
-# Example Env Var: FRONTEND_URLS=https://www.yoursite.com,http://localhost:5173
-frontend_urls = os.getenv('FRONTEND_URLS', 'http://localhost:5173').split(',')
-CORS_ALLOWED_ORIGINS = frontend_urls
+# --- CRITICAL FIX 2 & 3: SECURITY & CORS ---
 
-# CSRF Trusted Origins (Required for HTTPS POST requests from external domains)
-CSRF_TRUSTED_ORIGINS = frontend_urls
+# Allow Frontend to access Backend freely (Fixes network blocks)
+CORS_ALLOW_ALL_ORIGINS = True 
+CORS_ALLOW_CREDENTIALS = True
+
+# Trust your specific domain for CSRF (Fixes Login 403 Errors)
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost",
+    "http://127.0.0.1",
+    "https://fanuc-scm.goval.app",  # <--- YOUR DOMAIN
+]
+
+# Optional: If behind HTTPS Nginx Proxy
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # 3. DRF & JWT Configuration
 REST_FRAMEWORK = {
