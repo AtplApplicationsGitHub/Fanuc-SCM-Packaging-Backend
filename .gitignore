@@ -1,39 +1,9 @@
-# Environment
+client/
 .env
-.env/
 venv/
-env/
-
-# Python
 __pycache__/
-*.py[cod]
-*.pyo
-*.pyd
-
-# Logs
+*.pyc
+db.sqlite3
 logs/
-*.log
-npm-debug.log*
-yarn-debug.log*
-pnpm-debug.log*
-
-# Node
-node_modules/
-dist/
-dist-ssr/
-coverage/
-.vite/
-
-# LLM / structure dumps
-structure*.json
-
-# Editor / OS
-.vscode/*
-!.vscode/extensions.json
+.vscode/
 .idea/
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
